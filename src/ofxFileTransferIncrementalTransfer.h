@@ -23,9 +23,12 @@ public:
 				tcp::socket& rSock
 				,ofxFileTransferSend* pTransferSender
 	);
+	~ofxFileTransferIncrementalTransfer();
+	
 	void go();
 	void sendChunk();
 	void onChunkComplete(const boost::system::error_code& rError);
+	void onHandleSizeCheck(const boost::system::error_code& rError);
 	
 	ofxFileTransferSend*	transfer_sender;
 	tcp::socket&			sock;

@@ -24,6 +24,11 @@ public:
 					,string sFile
 					,ofxFileTransfer* pTransfer
 	);
+	~ofxFileTransferSend();
+	void onEnd();
+	void start();
+	void onFileTransferReady(ofxFileTransferIncrementalTransfer* pIncSender);
+	void onFileTransferReady();
 	
 private:
 	// Executed when we resolved the end point.
@@ -44,14 +49,43 @@ private:
 		const boost::system::error_code &rError
 	);
 	
+	void handleCommand(
+		const boost::system::error_code &rError
+	);
+	void reset();
+	void sendFileInfo();
+		void onTimeout();
 		
-	ifstream*				out_stream;
+	void startSendingFileChunks();
+	void sendFileChunk();
+	void handleFileChunkSend(const boost::system::error_code &rError, size_t nBytesSend);
+		
+//	ifstream*				out_stream;
 	tcp::resolver			resolver_;
 	tcp::socket				socket_;
 	const char*				port;
+	const char*				server;
 	string					file;
+	boost::asio::streambuf	receive_data;
 	boost::asio::streambuf	send_data;
 	std::ifstream*			file_stream;
 	ofxFileTransferIncrementalTransfer*	sender;
+
+	// implementing the send operations in this class:
+	//ofxFileTransferSend*	transfer_sender;
+	//tcp::socket&			sock;
+	//ifstream*				source;
+	
+	boost::array<char, 1048576> send_array; 
+	boost::asio::streambuf	send_buffer;
+	bool send_ready;
+	boost::asio::deadline_timer timeout;
+	
+	//std::vector<char>		buf;
+	size_t				chunk_size;
+	size_t				bytes_send;
+	size_t				bytes_left;
+	size_t				file_size;
+
 };
 #endif

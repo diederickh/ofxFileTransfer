@@ -1,56 +1,57 @@
 #ifndef OFXFILETRANSFERCONNECTIONH
 #define OFXFILETRANSFERCONNECTIONH
 
-#undef check // necessary to get Boost running on Mac
 
-#include <istream>
-#include <ostream>
-#include <iostream>
-#include <fstream>
+#undef check
+#include <boost/enable_shared_from_this.hpp>
 #include <boost/asio.hpp>
+#include <boost/function.hpp>
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
-#include <boost/enable_shared_from_this.hpp>
+#include <boost/function.hpp>
+#include <iostream>
+#include <fstream>
+#include <string>
 
 #include "ofMain.h"
-#include "ofxFileTransferConnection.h"
-
-using boost::asio::ip::tcp;
+#include "ofxFileTransferManager.h"
 
 class ofxFileTransferConnection : public boost::enable_shared_from_this<ofxFileTransferConnection> {
 public:
 	typedef boost::shared_ptr<ofxFileTransferConnection> pointer;
-	static pointer create(boost::asio::io_service& rIOService);
-		
-	tcp::socket& socket();
-	void start();
-
-private:	
 	ofxFileTransferConnection(
-				boost::asio::io_service& rIOService
-	);	
+			boost::asio::io_service& rIOService
+		
+	);
+	~ofxFileTransferConnection();
+	void start();
 	
-	void handleFileName(
-				const boost::system::error_code& rError
+	boost::asio::ip::tcp::socket& socket() {	
+		return socket_;
+	}
+private:
+	void handleReadRequest(
+				const boost::system::error_code& rErr
+				,std::size_t nBytesTransferred
 	);
 	
-	void handleFileSize(
-				const boost::system::error_code& rError
+	void handleFileContent(
+				const boost::system::error_code& rErr
+				,std::size_t nBytesTransferred
 	);
 	
-	void handleFileChunk(
-				const boost::system::error_code& rError
-				,size_t nBytesTransferred
+	void handleError(
+				 const std::string& rFunction
+				,const boost::system::error_code& rErr
 	);
 	
-	uint64_t				file_size;
-	uint64_t				bytes_left;
-	std::string				file_name;
-	ofstream				ofile_stream;
-	tcp::socket				socket_;
-	boost::asio::streambuf	response;
-	boost::array<char, 8192> buffer; 
 	
+	std::string file_path_;
+	std::size_t file_size_;
+	std::ofstream out_file_stream_;
+	boost::asio::ip::tcp::socket socket_;
+	boost::asio::streambuf request_buf_;
+	boost::array<char, 40960> buffer_;
 };
 
 #endif

@@ -1,154 +1,117 @@
 #include "ofxFileTransferConnection.h"
-#include "ofxFileTransfer.h"
-using boost::asio::ip::tcp;
-
+#include <sstream> // only for testing.
+//,manager(pManager)
+//	,ofxFileTransferManager* pManager
 ofxFileTransferConnection::ofxFileTransferConnection(
-	boost::asio::io_service& rIOService
+		boost::asio::io_service& rIOService
 )
-	:socket_(rIOService)
-	,file_size(0)
+:socket_(rIOService)
+,file_size_(0)
 {
 }
 
-
-// Create a new smart pointer.
-// -----------------------------------------------------------------------------
-ofxFileTransferConnection::pointer ofxFileTransferConnection::create(
-	boost::asio::io_service& rIOService
-)
-{
-	return pointer(new ofxFileTransferConnection(rIOService));
+ofxFileTransferConnection::~ofxFileTransferConnection() {
+	std::cout << "~~~~ ofxFileTransferConnection" << std::endl;
 }
 
-// Get socket reference.
-// -----------------------------------------------------------------------------
-tcp::socket& ofxFileTransferConnection::socket() {
-	return socket_;
-}
-	
-// Start reading data from the socket	
-// -----------------------------------------------------------------------------	
 void ofxFileTransferConnection::start() {
-	boost::asio::async_read_until(	
-							socket_
-							,response
-							,"\r\n"
-							,boost::bind(
-								&ofxFileTransferConnection::handleFileName
-								,shared_from_this()
-								,boost::asio::placeholders::error
-							)
-	);
-}
+	std::cout << __FUNCTION__ << std::endl;
 	
-// The client sends us the file path to which we need to save the incoming data.
-// -----------------------------------------------------------------------------
-void ofxFileTransferConnection::handleFileName(
-				const boost::system::error_code& rError
-) 
-{
-	if(!rError) {
-		istream response_stream(&response);
-		response_stream >> file_name;
-		boost::asio::async_read_until(	
-								socket_
-								,response
-								,"\r\n"
-								,boost::bind(
-									&ofxFileTransferConnection::handleFileSize
-									,shared_from_this()
-									,boost::asio::placeholders::error
-								)	
-		);
-	}
-	else {
-		cout << "Error: " << rError.message() << std::endl;
-	}
-}
-
-// After we've received the filename, we get the size and start the download.
-// -----------------------------------------------------------------------------
-void ofxFileTransferConnection::handleFileSize(
-						const boost::system::error_code& rError
-) 
-{
-	if(!rError) {
-		// get number of bytes to receive.
-		istream response_stream(&response);
-		response_stream >> file_size >> std::ws;
-		
-		// open the file to which we need to write the contents.
-		std:string out_path = ofToDataPath(
-			file_name +ofToString(ofGetElapsedTimeMillis()) +".jpg"
-		);
-		ofile_stream.open(
-					out_path.c_str()
-					,std::ios::out|std::ios::trunc|std::ios::binary
-		);
-		
-		// start retrieving the file data.
-		bytes_left = file_size;
-		boost::asio::async_read(
+	async_read_until(
 			socket_
-			,boost::asio::buffer(buffer) 
+			,request_buf_
+			,"\n\n"
 			,boost::bind(
-				&ofxFileTransferConnection::handleFileChunk
+				&ofxFileTransferConnection::handleReadRequest
 				,shared_from_this()
 				,boost::asio::placeholders::error
 				,boost::asio::placeholders::bytes_transferred
 			)
-		);
-
-	}
-	else {
-		cout << "Error: " << rError.message() << std::endl;
-	}
+	);
 }
-
-
-// We receive a chunk of file data and write it to the file stream.
-// -----------------------------------------------------------------------------
-void ofxFileTransferConnection::handleFileChunk(
-			const boost::system::error_code& rError
-			,size_t nBytesTransferred
-
-) {
-	if(!rError) {
 	
-		if(ofile_stream.is_open()) {
-			ofile_stream.write(buffer.data(),nBytesTransferred);
-			bytes_left -= nBytesTransferred;
+	
+void ofxFileTransferConnection::handleReadRequest(
+		const boost::system::error_code& rErr
+		,std::size_t nBytesTransferred
+) 
+{
+	if(rErr) {
+		return handleError(__FUNCTION__, rErr);
+	}
+	std::cout << __FUNCTION__ << "(" << nBytesTransferred << ")" << std::endl;
+	std::istream request_stream(&request_buf_);
+	request_stream >> file_path_;
+	request_stream >> file_size_;
+	file_path_ = ofToDataPath(file_path_);
+	std::cout << __FUNCTION__ << " " << file_size_ << " name:" << file_path_ << std::endl;
+	request_stream.read(buffer_.c_array(), 2); // read "\n\n"
+
+	out_file_stream_.open(file_path_.c_str(), std::ios_base::binary);
+	if(!out_file_stream_) {
+		std::cout << "<< failed opening: " << file_path_ << std::endl;
+		return;
+	}
+	
+	// write extra bytes received
+	do {
+		request_stream.read(buffer_.c_array(), (std::streamsize)buffer_.size());
+		out_file_stream_.write(buffer_.c_array(), request_stream.gcount());
 		
-			if(bytes_left < 2000) {
-
-
-			}
-			if(bytes_left == 0) {
-				cout << "ready\n";
-				// @todo -> we should notify that we're ready and memory can be freed
-				ofile_stream.close();
-				return;
-			}
-			size_t num_bytes = buffer.size();
-			if(bytes_left > 0 && bytes_left < buffer.size()) {
-				num_bytes = bytes_left;
-			}
-			//cout << "Bytes left: " << bytes_left << " and get: " << num_bytes << std::endl;
-			// async_read(), reads untill the buffer is filled.(until buffer.size())
-			boost::asio::async_read(
-				socket_
-				,boost::asio::buffer(buffer,num_bytes) 
-				,boost::bind(
-					&ofxFileTransferConnection::handleFileChunk
-					,shared_from_this()
-					,boost::asio::placeholders::error
-					,boost::asio::placeholders::bytes_transferred
-				)
-			);
+	} while(request_stream.gcount() > 0);
+	
+	boost::asio::async_read(
+		socket_
+		,boost::asio::buffer(buffer_.c_array(), buffer_.size())
+		,boost::bind(
+			&ofxFileTransferConnection::handleFileContent
+			,shared_from_this()
+			,boost::asio::placeholders::error
+			,boost::asio::placeholders::bytes_transferred
+		)
+	);
+}
+	
+	
+void ofxFileTransferConnection::handleFileContent(
+		const boost::system::error_code& rErr
+		,std::size_t nBytesTransferred
+)
+{
+	if(nBytesTransferred > 0) {
+		out_file_stream_.write(buffer_.c_array(), (std::streamsize)nBytesTransferred);
+		std::cout << __FUNCTION__ << "<< recv " << out_file_stream_.tellp() << " bytes." << std::endl;
+		std::cout << __FUNCTION__ << out_file_stream_.tellp() << " <> " << (std::streamsize)file_size_ << std::endl;
+		if(out_file_stream_.tellp() >= (std::streamsize)file_size_) {
+			//manager->removeTransfer(shared_from_this());
+			return ;
 		}
 	}
-	else {
-		cout << "Error receiving data..." << rError.message() << std::endl;
+	if(rErr) {
+		return handleError(__FUNCTION__, rErr);
 	}
+	boost::asio::async_read(
+		socket_
+		,boost::asio::buffer(buffer_.c_array(), buffer_.size())
+		,boost::bind(
+			&ofxFileTransferConnection::handleFileContent
+			,shared_from_this()
+			,boost::asio::placeholders::error
+			,boost::asio::placeholders::bytes_transferred
+		)
+	);
+	
+}
+
+void ofxFileTransferConnection::handleError(
+		const std::string& rFunction
+		,const boost::system::error_code& rErr
+)
+{
+	std::cout	<< __FUNCTION__ 
+				<< " in " << rFunction 
+				<< " due to " << rErr 
+				<< " " << rErr.message() 
+				<< std::endl;
 }
 

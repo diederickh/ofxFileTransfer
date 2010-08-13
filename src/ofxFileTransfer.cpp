@@ -11,11 +11,13 @@ ofxFileTransfer::ofxFileTransfer(const char* nPort)
 	,acceptor_(
 		io_service
 		,tcp::endpoint(tcp::v4()
-		, atoi(port)
+					,atoi(port)
+		)
 	)
-)
+	,is_sending_files(false)
 {
 }
+
 
 
 // Call this once to start accepting incoming connections, this is necessary
@@ -29,8 +31,11 @@ void ofxFileTransfer::accept() {
 // Start accepting clients.
 //------------------------------------------------------------------------------
 void ofxFileTransfer::receive() {
+/*
 	ofxFileTransferConnection::pointer new_connection = 
-			ofxFileTransferConnection::create(acceptor_.io_service());
+			ofxFileTransferConnection::create(acceptor_.io_service(), this);
+	*/
+	ofxFileTransferConnection* new_connection = new	ofxFileTransferConnection(acceptor_.io_service(), this);
 	connections.push_back(new_connection);	
 	acceptor_.async_accept(
 					new_connection->socket()
@@ -46,7 +51,7 @@ void ofxFileTransfer::receive() {
 // Receive a new connection/client.
 //------------------------------------------------------------------------------
 void ofxFileTransfer::handleAccept(
-			ofxFileTransferConnection::pointer pConnection
+			ofxFileTransferConnection* pConnection
 			,const boost::system::error_code &rError
 )
 {
@@ -74,20 +79,59 @@ void ofxFileTransfer::transferFile(
 	);
 	// must copy pointer or io_service will stop using it
 	file_connections.push_back(new_send); 
+	if(!is_sending_files) {
+		is_sending_files = true;
+		scheduleSendingOfFiles();
+	}
+	
 }
+
+void ofxFileTransfer::scheduleSendingOfFiles() {
+	if(file_connections.size() > 0) {
+		ofxFileTransferSend* conn = file_connections.back();
+		conn->start();
+		ofSleepMillis(2000);
+	}
+}
+
 
 
 // This is called by the "client" when the transfer is done. We remove/delete
 // the instance of ofxFileTransferSend here!
 //------------------------------------------------------------------------------
-void ofxFileTransfer::onFileTransferReady(ofxFileTransferSend* pFileTransfer) {
-	std::cout << "YEEEE" << std::endl;
+void ofxFileTransfer::onFileTransferSendReady(ofxFileTransferSend* pFileTransferSend) {
+	// clean up the connection
+	vector<ofxFileTransferSend*>::iterator it = file_connections.begin();
+	while(it != file_connections.end()) {
+		if(pFileTransferSend == (*it)) {
+			delete *it;
+			file_connections.erase(it);
+			is_sending_files = false;
+			scheduleSendingOfFiles(); // send next one.
+			break;
+		}
+		++it;
+	}
+}
+
+void ofxFileTransfer::onFiletransferConnectionReady(
+		ofxFileTransferConnection* pConnection
+)
+{
+	vector<ofxFileTransferConnection*>::iterator it = connections.begin();
+	while(it != connections.end()) {
+		if((*it) == pConnection) {
+			delete *it;
+			connections.erase(it);
+		}
+		++it;
+	}
 }
 
 
 // Utility function: get file size
 //------------------------------------------------------------------------------
-uint64_t ofxFileTransfer::getFileSize(string sFilePath) {
+size_t ofxFileTransfer::getFileSize(string sFilePath) {
 	fs::path p(sFilePath, fs::native);
 	if(!fs::exists(p)) {
 		return 0;

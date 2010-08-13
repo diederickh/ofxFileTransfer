@@ -29,10 +29,10 @@ public:
 	
 	// Handle incoming connections.
 	void handleAccept(
-		ofxFileTransferConnection::pointer pConnection
+		ofxFileTransferConnection* pConnection
 		,const boost::system::error_code &rError
 	);
-	
+//		ofxFileTransferConnection::pointer pConnection	
 	// Our thread function.
 	virtual void threadedFunction();
 	
@@ -44,23 +44,32 @@ public:
 	);
 	
 	// Called when the file transfer is reader, cleans up things.
-	void onFileTransferReady(
+	void onFileTransferSendReady(
 		ofxFileTransferSend* pFileTransfer
+	);
+	
+	
+	void onFiletransferConnectionReady(
+		ofxFileTransferConnection* pConnection
 	);
 	
 
 	// Utility function: get file size
-	static uint64_t getFileSize(string sFilePath);
+	static size_t getFileSize(string sFilePath);
 
-
+	
 	
 	boost::asio::io_service io_service;
 		
 private:
 
+	void scheduleSendingOfFiles();
+	bool is_sending_files;
+	
 	const char* port;
 	tcp::acceptor acceptor_;
-	vector<ofxFileTransferConnection::pointer> connections;
+	//vector<ofxFileTransferConnection::pointer> connections;
+	vector<ofxFileTransferConnection*> connections;
 	vector<ofxFileTransferSend*> file_connections;
 };
 #endif
