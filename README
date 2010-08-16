@@ -1,0 +1,10 @@
+ofxFileTransfer
+===============
+Addon created as an addon for openFrameworks which allows you to easily 
+transfer files from "ofxFileTransferClients" to "ofxFileTransferServers".
+You can use the ofxFileTransfer[Client|Server] for simple one-to-one
+file transfers, or use the ofxFileTransferManager class to send multiple
+files.
+
+The ofxSync* classes form the basis to keep multiple remote clients in
+sync.
