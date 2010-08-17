@@ -15,6 +15,7 @@ ofxSyncClient::ofxSyncClient(
 ,transfer_server_port_(nTransferServerPort)
 ,file_server_((unsigned short)atoi(transfer_server_port_.c_str()))
 {
+	file_server_.startThread();
 }
 
 void ofxSyncClient::start() {
@@ -65,9 +66,10 @@ void ofxSyncClient::handleConnect(
 		dir_list_.getList(ofToDataPath("images"), o);
 		
 		uint32_t size = request_.size();
+		uint32_t transfer_port = atoi(transfer_server_port_.c_str());
 		std::iostream copy_buf(&size_buf_);
 		copy_buf.write((char*)&size, sizeof(size));
-		
+		copy_buf.write((char*)&transfer_port, sizeof(transfer_port));
 		copy_buf.write("\n\n", 2);
 	
 		cout << "size: "<< request_.size() << std::endl;

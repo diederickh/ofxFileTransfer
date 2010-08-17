@@ -11,6 +11,7 @@
 #include <sstream>
 #include <vector>
 #include "ofxSyncDirList.h"
+#include "ofxFileTransferManager.h"
 
 using boost::asio::ip::tcp;
 
@@ -36,5 +37,10 @@ private:
 	uint32_t data_size;
 	uint32_t bytes_to_read;
 	ofxSyncDirList sync_list_;
+	
+	// we connect to the ofxFileTransferServer on the client.
+	ofxFileTransferManager transfer_man_;
+	std::string transfer_addr_;
+	std::string transfer_port_;
 };
 #endif

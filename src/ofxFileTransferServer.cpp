@@ -33,7 +33,7 @@ void ofxFileTransferServer::accept() {
 						,boost::asio::placeholders::error
 					)
 	);
-	std::cout << __FUNCTION__ << " start accepting " << std::endl;
+	std::cout << __FUNCTION__ << " start accepting on port: " << port << std::endl;
 	io_service.run();
 }
 
