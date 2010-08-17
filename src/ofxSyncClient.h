@@ -21,7 +21,7 @@ public:
 	
 	ofxSyncClient(
 		boost::asio::io_service& rIOService
-		,const std::string sServer
+		,const std::string sSyncServerIP
 		,const std::string nSyncServerPort
 		,const std::string nTransferServerPort
 	);
@@ -60,8 +60,9 @@ private:
 	boost::array<char, 1024>buf_;
 	boost::asio::streambuf request_;
 	boost::asio::streambuf size_buf_;
-	std::string server_;
+	std::string sync_server_ip_;
 	std::string sync_server_port_;
+	std::string transfer_server_ip_;
 	std::string transfer_server_port_;
 
 	ofxSyncDirList dir_list_;

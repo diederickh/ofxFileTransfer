@@ -101,6 +101,7 @@ void ofxSyncConnection::handleSyncData(
 			error = sync_list_.parseList(local_list, local_files);
 			if(error) {
 				std::cout << "Error: cannot parse local list" << std::endl;
+				
 				return;
 			}
 			
