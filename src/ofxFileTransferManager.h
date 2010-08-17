@@ -17,7 +17,7 @@ class ofxFileTransferManager {
 public:
 	ofxFileTransferManager();
 	void transferFile(
-				const std::string sServer
+				 const std::string sServer
 				,const std::string nPort
 				,const std::string sFile
 				,const std::string sRemoteFile

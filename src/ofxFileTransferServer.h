@@ -18,10 +18,10 @@ public:
 				unsigned short nPort
 	);
 	
-
-
 	void startThread();
-		void accept();	
+	
+	void accept();	
+	
 	void handleAccept(
 				ofxFileTransferConnection::pointer pConnection
 				,const boost::system::error_code& rErr

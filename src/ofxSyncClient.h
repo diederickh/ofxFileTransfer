@@ -11,6 +11,7 @@
 #include <boost/array.hpp>
 
 #include "ofxSyncDirList.h"
+#include "ofxFileTransferServer.h"
 
 using boost::asio::ip::tcp;
 
@@ -21,7 +22,8 @@ public:
 	ofxSyncClient(
 		boost::asio::io_service& rIOService
 		,const std::string sServer
-		,const std::string nPort
+		,const std::string nSyncServerPort
+		,const std::string nTransferServerPort
 	);
 	
 	void start();
@@ -59,8 +61,10 @@ private:
 	boost::asio::streambuf request_;
 	boost::asio::streambuf size_buf_;
 	std::string server_;
-	std::string port_;
+	std::string sync_server_port_;
+	std::string transfer_server_port_;
 
-	ofxSyncDirList dir_list;
+	ofxSyncDirList dir_list_;
+	ofxFileTransferServer file_server_;
 };
 #endif

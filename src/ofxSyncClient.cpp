@@ -4,16 +4,20 @@
 ofxSyncClient::ofxSyncClient(
 	boost::asio::io_service& rIOService
 	,const std::string sServer
-	,const std::string nPort
+	,const std::string nSyncServerPort
+	,const std::string nTransferServerPort
+
 ):resolver_(rIOService)
 ,socket_(rIOService)
 ,server_(sServer)
-,port_(nPort)
+,sync_server_port_(nSyncServerPort)
+,transfer_server_port_(nTransferServerPort)
+,file_server_((unsigned short)atoi(transfer_server_port_.c_str()))
 {
 }
 
 void ofxSyncClient::start() {
-	tcp::resolver::query query(server_, port_);
+	tcp::resolver::query query(server_, sync_server_port_);
 	resolver_.async_resolve(
 					query
 					,boost::bind(	
@@ -57,7 +61,7 @@ void ofxSyncClient::handleConnect(
 	if(!rErr) {
 		// send data!
 		std::iostream o(&request_);
-		dir_list.getList(ofToDataPath("images"), o);
+		dir_list_.getList(ofToDataPath("images"), o);
 		
 		uint32_t size = request_.size();
 		std::iostream copy_buf(&size_buf_);

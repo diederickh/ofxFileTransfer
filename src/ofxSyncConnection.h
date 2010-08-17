@@ -7,7 +7,11 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/bind.hpp>
 #include <boost/array.hpp>
+
 #include <sstream>
+#include <vector>
+#include "ofxSyncDirList.h"
+
 using boost::asio::ip::tcp;
 
 class ofxSyncConnection : public boost::enable_shared_from_this<ofxSyncConnection> {
@@ -31,5 +35,6 @@ private:
 	boost::array<char, 4096> buffer_;
 	uint32_t data_size;
 	uint32_t bytes_to_read;
+	ofxSyncDirList sync_list_;
 };
 #endif

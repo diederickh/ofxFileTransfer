@@ -1,4 +1,6 @@
 #include "ofxSyncConnection.h"
+#include "ofMain.h"
+
 ofxSyncConnection::ofxSyncConnection(boost::asio::io_service& rService) 
 :socket_(rService) 
 {
@@ -39,11 +41,14 @@ void ofxSyncConnection::handleRequest(
 		read += request_stream.gcount();
 	}
 	bytes_to_read = data_size - read;
-	
+	size_t chunk_size = buffer_.size();
+	if(bytes_to_read < chunk_size)
+		chunk_size = bytes_to_read;
+		
 	// .. and read the rest.
 	boost::asio::async_read(
 		socket_
-		,boost::asio::buffer(buffer_.c_array(), buffer_.size())
+		,boost::asio::buffer(buffer_.c_array(), chunk_size)
 		,boost::bind(
 			&ofxSyncConnection::handleSyncData
 			,shared_from_this()
@@ -81,23 +86,31 @@ void ofxSyncConnection::handleSyncData(
 		}
 		else {
 			// parse the remote file list.
-			uint32_t file_size;
-			uint32_t name_size;
- 
-			while(remote_list) {
-				char buf[4096];
-
-				remote_list.read((char*)&file_size, sizeof(file_size));
-				remote_list.read((char*)&name_size, sizeof(name_size));
-				if(name_size > 4096) {
-					std::cout << "Error: length of filename is incorrect: " << name_size << std::endl;
-					break;
-				}
-				remote_list.read(&buf[0], name_size);
-				buf[name_size] = '\0';
-				std::string name(buf);
-				std::cout << "file size: "<< file_size << " name-len: " << name_size << ", name: '" << name << "'" << std::endl;
+			bool error = false;
+			std::vector<SyncInfo>remote_files;
+			error = sync_list_.parseList(remote_list, remote_files);
+			if(error) {
+				std::cout << "Error: cannot parse remote list" << std::endl;
+				return;
 			}
+				
+			// get local list
+			std::stringstream local_list;
+			std::vector<SyncInfo>local_files;
+			sync_list_.getList(ofToDataPath("images"), local_list);
+			error = sync_list_.parseList(local_list, local_files);
+			if(error) {
+				std::cout << "Error: cannot parse local list" << std::endl;
+				return;
+			}
+			
+			// get difference.
+			std::vector<SyncInfo>files_to_sync;
+			sync_list_.getDifference(local_files, remote_files, files_to_sync);
+			if(files_to_sync.size() > 0) {
+					// @todo -> sync with remote
+			}
+				
 			std::cout << "READY parsin gbuffer" << std::endl;
 			remote_list.str("");
 		}
