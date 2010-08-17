@@ -37,9 +37,11 @@ void ofxSyncConnection::handleRequest(
 	port_stream << transfer_port;
 	transfer_port_ = port_stream.str();
 	cout << "PRT:" << transfer_port_ << std::endl;
+	// @todo - when the remote doesn't have one file at all it will return 0
+	// how do we handle that?
 //	return;
-	if(data_size <= 0)
-		return;
+//	if(data_size <= 0)
+//		return;
 	
 	// read the first chunk of data.
 	size_t read = 0;
