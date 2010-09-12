@@ -22,7 +22,7 @@ void ofxSyncClient::start() {
 	tcp::resolver::query query(sync_server_ip_, sync_server_port_);
 	resolver_.async_resolve(
 					query
-					,boost::bind(	
+					,boost::bind(
 							&ofxSyncClient::handleResolve
 							,shared_from_this()
 							,boost::asio::placeholders::error
@@ -30,7 +30,7 @@ void ofxSyncClient::start() {
 					)
 	);
 }
-		
+
 void ofxSyncClient::handleResolve(
 		const boost::system::error_code& rErr
 		,tcp::resolver::iterator oEndPoint
@@ -54,26 +54,28 @@ void ofxSyncClient::handleResolve(
 }
 
 
-	
+
 void ofxSyncClient::handleConnect(
 		const boost::system::error_code& rErr
 		,tcp::resolver::iterator oEndPoint
 )
 {
 	if(!rErr) {
-		// send data!
+ 		// send data!
 		std::iostream o(&request_);
 		dir_list_.getList(ofToDataPath("images"), o);
-		
+
+		std::cout << "conenct!" <<std::endl;
+
 		uint32_t size = request_.size();
 		uint32_t transfer_port = atoi(transfer_server_port_.c_str());
 		std::iostream copy_buf(&size_buf_);
 		copy_buf.write((char*)&size, sizeof(size));
 		copy_buf.write((char*)&transfer_port, sizeof(transfer_port));
 		copy_buf.write("\n\n", 2);
-	
+
 		cout << "size: "<< request_.size() << std::endl;
-		
+
 		boost::asio::async_write(
 					socket_
 					,size_buf_
@@ -108,7 +110,7 @@ void ofxSyncClient::handleSize(
 )
 {
 	if(!rErr) {
-		
+
 		boost::asio::async_write(
 						socket_
 						,request_
@@ -125,24 +127,21 @@ void ofxSyncClient::handleSize(
 	}
 }
 
-	
-	
+
+
 void ofxSyncClient::handleWrite(
 			const boost::system::error_code& rErr
 			,size_t nBytesTransferred
 )
 {
 	if(!rErr) {
-		std::cout << "READY SENDING: " << nBytesTransferred << " bytes" << std::endl;	
+		std::cout << "READY SENDING: " << nBytesTransferred << " bytes" << std::endl;
 	}
 	else {
 		std::cout << "Error: " << rErr.message() << std::endl;
 	}
 }
 
-
-
-	
 void ofxSyncClient::handleReady(
 			const boost::system::error_code& rErr
 )

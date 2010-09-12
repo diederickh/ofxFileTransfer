@@ -1,22 +1,29 @@
 #include "ofxSyncDirList.h"
-
+#include "ofMain.h"
 namespace fs = boost::filesystem;
 
 ofxSyncDirList::ofxSyncDirList() {
 }
 
 bool ofxSyncDirList::getList(std::string sPath, std::iostream& rOut) {
+	std::cout << "hier?" << std::endl;
+	std::cout << "path|; " << sPath << std::endl;
+	//sPath = ofToDataPath(sPath,true);
+	sPath = "./data/images/";
+	cout << sPath;
+	return true;
 	fs::basic_recursive_directory_iterator<fs::path> cur(sPath);
     fs::basic_recursive_directory_iterator<fs::path> end;
 	std::stringstream out;
+
     for (; cur != end; ++cur) {
-		if(!fs::is_regular_file(cur->path())) { 
+		if(!fs::is_regular_file(cur->path())) {
 			continue;
 		}
 		// get file size
 		uint32_t file_size = -1;
 		file_size = fs::file_size(cur->path());
-		
+
 		// create ID we use to create the sha1 hash.
 		std::string node_name = cur->path().string();
 		uint32_t name_size = node_name.size()+1;
@@ -45,16 +52,16 @@ bool ofxSyncDirList::parseList(std::iostream& rDataStream, std::vector<SyncInfo>
 		rDataStream.read(&buf[0], name_size);
 		buf[name_size] = '\0';
 		std::string name(buf);
-		
+
 		SyncInfo info(name, file_size);
 		rResultList.push_back(info);
-		
+
 		std::cout << "file size: "<< file_size << " name-len: " << name_size << ", name: '" << name << "'" << std::endl;
 	}
 	return true;
 }
 
-bool ofxSyncDirList::getDifference(		
+bool ofxSyncDirList::getDifference(
 				std::vector<SyncInfo>&a
 				,std::vector<SyncInfo>&b
 				,std::vector<SyncInfo>&rResult
