@@ -63,7 +63,14 @@ void ofxSyncClient::handleConnect(
 	if(!rErr) {
  		// send data!
 		std::iostream o(&request_);
-		dir_list_.getList(ofToDataPath("images"), o);
+		//ldir: "client" directory which we want to keep up2date
+		//rdit: the "remote" directory on server with which we want to sync
+		std::string ldir = "/Users/diederickhuijbers/Documents/programming/c++/of61fatxcode/apps/diederick/0059_sync_client/bin/data/test/";
+		std::string rdir = "/Users/diederickhuijbers/Documents/programming/c++/of61fatxcode/apps/diederick/0058_sync_server/bin/data/images/";
+		
+		//o << "local_dir" << std::endl;
+		//o << "remote_dir" << std::endl;
+		dir_list_.getList(ldir, o);
 
 		std::cout << "conenct!" <<std::endl;
 
@@ -72,7 +79,11 @@ void ofxSyncClient::handleConnect(
 		std::iostream copy_buf(&size_buf_);
 		copy_buf.write((char*)&size, sizeof(size));
 		copy_buf.write((char*)&transfer_port, sizeof(transfer_port));
-		copy_buf.write("\n\n", 2);
+		ldir += "\n";
+		rdir += "\n";
+		copy_buf.write(ldir.c_str(), ldir.size());
+		copy_buf.write(rdir.c_str(), rdir.size());
+		copy_buf.write("\n", 1);
 
 		cout << "size: "<< request_.size() << std::endl;
 

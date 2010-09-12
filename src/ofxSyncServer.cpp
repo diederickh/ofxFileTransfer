@@ -28,7 +28,7 @@ void ofxSyncServer::start() {
 }
 
 void ofxSyncServer::handleAccept(ofxSyncConnection::pointer pCon, const boost::system::error_code &rErr) {
-	std::cout << "New connection! whoot" << std::endl;
+	std::cout << "ofxSyncServer: handleAccept, new connection." << std::endl;
 	if(!rErr) {
 		pCon->start();
 		ofxSyncConnection::pointer new_con(new ofxSyncConnection(io_service_));

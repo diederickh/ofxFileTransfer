@@ -7,7 +7,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/bind.hpp>
 #include <boost/array.hpp>
-
+#include <boost/algorithm/string.hpp>
 #include <sstream>
 #include <vector>
 #include "ofxSyncDirList.h"
@@ -42,5 +42,7 @@ private:
 	ofxFileTransferManager transfer_man_;
 	std::string transfer_addr_;
 	std::string transfer_port_;
+	std::string local_path_; // client path
+	std::string remote_path_; // server path
 };
 #endif

@@ -1,5 +1,6 @@
 #include "ofxFileTransferConnection.h"
 #include <sstream> // only for testing.
+namespace fs = boost::filesystem;
 //,manager(pManager)
 //	,ofxFileTransferManager* pManager
 ofxFileTransferConnection::ofxFileTransferConnection(
@@ -41,13 +42,26 @@ void ofxFileTransferConnection::handleReadRequest(
 	}
 	std::cout << __FUNCTION__ << "(" << nBytesTransferred << ")" << std::endl;
 	std::istream request_stream(&request_buf_);
-	request_stream >> file_path_;
+	//request_stream >> file_path_;
+	//request_stream >> file_size_;
+	//std::stringstream ss(request_buf_);
+	char path_buf[1024];
+	request_stream.getline(path_buf,1024);
 	request_stream >> file_size_;
+	//request_stream.getline(size_buf,1024);
+	file_path_ = path_buf;
+//	file_size_ = size_buf;
+	// create path when necessary
+	fs::path dir(file_path_);
+	if(!fs::exists(dir.parent_path())) {
+		std::cout << " path:" << dir.parent_path() << std::endl;
+		fs::create_directories(dir.parent_path());
+	}
+	
 	//file_path_ = ofToDataPath(file_path_);
 	//file_pat
 	std::cout << __FUNCTION__ << " " << file_size_ << " name:" << file_path_ << std::endl;
 	request_stream.read(buffer_.c_array(), 2); // read "\n\n"
-
 	out_file_stream_.open(file_path_.c_str(), std::ios_base::binary);
 	if(!out_file_stream_) {
 		std::cout << "<< failed opening: " << file_path_ << std::endl;

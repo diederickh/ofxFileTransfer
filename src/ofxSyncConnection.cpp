@@ -27,16 +27,21 @@ void ofxSyncConnection::handleRequest(
 	,std::size_t nBytesTransferred
 )
 {
+
 	uint32_t transfer_port = 0;
 	std::istream request_stream(&request_);
 	request_stream.read((char*)&data_size, sizeof(data_size));
 	request_stream.read((char*)&transfer_port, sizeof(transfer_port));
+	request_stream >> local_path_ >> remote_path_;
 	request_stream.read(buffer_.c_array(), 2); // read "\n\n"
+	std::cout << "Local dir: "<< local_path_ << std::endl;
+	std::cout << "Remote dir: " << remote_path_ << std::endl;
 	std::cout << "Transfer port:" << transfer_port << std::endl;
+	std::cout << "Data size: " << data_size << std::endl;
 	stringstream port_stream;
 	port_stream << transfer_port;
 	transfer_port_ = port_stream.str();
-	cout << "PRT:" << transfer_port_ << std::endl;
+
 	// @todo - when the remote doesn't have one file at all it will return 0
 	// how do we handle that?
 //	return;
@@ -56,6 +61,7 @@ void ofxSyncConnection::handleRequest(
 	if(bytes_to_read < chunk_size)
 		chunk_size = bytes_to_read;
 		
+	std::cout << "ofxSyncConnection: start reading the rest of the buffer: " <<bytes_to_read << std::endl;	
 	// .. and read the rest.
 	boost::asio::async_read(
 		socket_
@@ -76,6 +82,7 @@ void ofxSyncConnection::handleSyncData(
 )
 {
 	if(!rErr) {
+		std::cout << "ofxSyncConnection.handleSycnData: got some data.\n";
 		remote_list.write(buffer_.c_array(), nBytesTransferred);
 		bytes_to_read -= nBytesTransferred;
 		if(bytes_to_read > 0) {
@@ -94,8 +101,11 @@ void ofxSyncConnection::handleSyncData(
 					,boost::asio::placeholders::bytes_transferred
 				)
 			);
+	
 		}
 		else {
+			std::cout << "Compare remote and local list." << std::endl;
+			
 			// parse the remote file list.
 			bool result = false;
 			std::vector<SyncInfo>remote_files;
@@ -105,10 +115,10 @@ void ofxSyncConnection::handleSyncData(
 				return;
 			}
 				
-			// get local list
+			// get local list (which is remote of the client)
 			std::stringstream local_list;
 			std::vector<SyncInfo>local_files;
-			sync_list_.getList(ofToDataPath("images"), local_list);
+			sync_list_.getList(remote_path_, local_list);
 			result = sync_list_.parseList(local_list, local_files);
 			if(!result) {
 				std::cout << "Error: cannot parse local list" << std::endl;
@@ -124,16 +134,24 @@ void ofxSyncConnection::handleSyncData(
 				// @todo -> files with white space in name hang
 				std::vector<SyncInfo>::iterator it = files_to_sync.begin();
 				while(it != files_to_sync.end()) {
-					std::cout	<< " fileserver: "		<< transfer_addr_
-								<< " port: "			<< transfer_port_
-								<< " file: "			<< (*it).file_name 
-								<<std::endl;
+					std::string client_dest = (*it).file_name;
+					boost::algorithm::replace_first(client_dest, remote_path_, local_path_);
+					std::cout	<< std::endl
+								<< ">> fileserver: "	<< transfer_addr_	<< std::endl
+								<< ">> port: "			<< transfer_port_	<< std::endl
+								<< ">> local file: "	<< (*it).file_name  << std::endl
+								<< ">> remote file: "	<< (*it).file_name  << std::endl
+								<< ">> new_remote: "	<< client_dest		<< std::endl
+								<< "-----------------------" << std::endl
+								<< std::endl;
+								
 					transfer_man_.transferFile(
 						transfer_addr_
 						,transfer_port_.c_str()
 						,(*it).file_name
-						,(*it).file_name
+						,client_dest
 					);
+					
 					++it;
 					//break;
 				}
