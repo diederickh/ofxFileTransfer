@@ -61,7 +61,7 @@ public:
 				,std::vector<SyncInfo>&rResult
 	);
 	bool isHidden(fs::path rPath);
-	fs::path getPathRelativeTo(fs::path oRelativeTo, fs::path oPath);
+	//fs::path getPathRelativeTo(fs::path oRelativeTo, fs::path oPath);
 };
 
 #endif

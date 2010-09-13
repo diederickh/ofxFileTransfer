@@ -2,20 +2,24 @@
 #include "ofMain.h"
 
 ofxSyncClient::ofxSyncClient(
-	const std::string sSyncServerIP
+	boost::asio::io_service& rIOService
+	,const std::string sSyncServerIP
 	,const std::string nSyncServerPort
 	,const std::string nTransferServerPort
 
-):resolver_(io_service_)
+):io_service_(rIOService)
+,resolver_(io_service_)
 ,socket_(io_service_)
 ,sync_server_ip_(sSyncServerIP)
 ,sync_server_port_(nSyncServerPort)
 ,transfer_server_ip_(sSyncServerIP)
 ,transfer_server_port_(nTransferServerPort)
-,file_server_((unsigned short)atoi(transfer_server_port_.c_str()))
+,file_server_(
+	new ofxFileTransferServer((unsigned short)atoi(transfer_server_port_.c_str())
+))
 ,is_connected(false)
 {
-	file_server_.startThread();
+	file_server_->startThread();
 }
 
 ofxSyncClient::~ofxSyncClient() {
@@ -34,7 +38,6 @@ void ofxSyncClient::connect() {
 							,boost::asio::placeholders::iterator
 					)
 	);
-	io_service_.run();
 }
 
 void ofxSyncClient::handleResolve(
@@ -92,8 +95,8 @@ void ofxSyncClient::handleConnect(
 }
 void ofxSyncClient::run() {
 	std::cout << "run again..." << std::endl;
-
-	io_service_.run();
+	//io_service_.run();
+	std::cout << "RUN READY" << std::endl;
 }
 void ofxSyncClient::synchronize() {
 	// send data!
@@ -170,7 +173,7 @@ void ofxSyncClient::handleWrite(
 	if(!rErr) {
 		std::cout << "ofxSyncClient.handleWrite(): Ready sending"  << nBytesTransferred << std::endl;
 		std::cout << "current length: " << request_.size() << std::endl;
-		io_service_.reset();
+		//io_service_.reset();
 		//std::cout << "READY SENDING: " << nBytesTransferred << " bytes" << std::endl;
 	}
 	else {

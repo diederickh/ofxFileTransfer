@@ -29,7 +29,7 @@ bool ofxSyncDirList::getList(std::string sPath, std::iostream& rOut) {
 		if(isHidden(cur->path())) {
 			continue;
 		}
-		//cout << "Use file in list: "<< filename << std::endl;
+		cout << "Put file in list: "<< filename << std::endl;
 	
 		
 		// get file size
@@ -62,6 +62,7 @@ bool ofxSyncDirList::isHidden(fs::path rPath) {
 }
 
 // from: https://svn.boost.org/trac/boost/ticket/1976
+/*
 boost::filesystem::path getPathRelativeTo(
 	 boost::filesystem::path const path
 	,boost::filesystem::path const base) 
@@ -94,6 +95,7 @@ boost::filesystem::path getPathRelativeTo(
         }
 	}
 }
+*/
     
 
 // Parse a stream created by 'getList'.
@@ -104,10 +106,7 @@ bool ofxSyncDirList::parseList(
 ) {
 	uint32_t file_size;
 	uint32_t name_size;
-//	std::string local_path;
-//	std::string remote_path;
-//	rDataStream >> local_path >> remote_path;
-//	std::cout << "Localpath: " << local_path << ", remote path: " << remote_path << std::endl;
+	std::cout << "ofxSyncDirList::parseList()" << std::endl;
 	while(rDataStream) {
 		char buf[4096];
 
@@ -117,19 +116,20 @@ bool ofxSyncDirList::parseList(
 			std::cout << "Error: length of filename is incorrect: " << name_size << std::endl;
 			break;
 		}
-		
+
 		rDataStream.read(&buf[0], name_size);
 		buf[name_size] = '\0';
 		std::string name(buf);
-
+		std::cout << "ofxSyncDirList::parseList() - found file: " << name << std::endl;
 		std::string relative_file_name = name;
-		boost::algorithm::replace_first(relative_file_name, sBasePath,"");
+		boost::algorithm::replace_first(relative_file_name, sBasePath, "");
 		
 		SyncInfo info(name, relative_file_name, file_size);
 		rResultList.push_back(info);
 
 		//std::cout << "file size: "<< file_size << " name-len: " << name_size << ", name: '" << name << "'" << std::endl;
 	}
+	std::cout << "ofxSyncDirList::parseList() - ready" << std::endl;
 	return true;
 }
 

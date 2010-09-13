@@ -9,6 +9,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/asio.hpp>
 #include <boost/array.hpp>
+#include <boost/thread.hpp>
 
 #include "ofxSyncDirList.h"
 #include "ofxFileTransferServer.h"
@@ -20,12 +21,13 @@ public:
 	typedef boost::shared_ptr<ofxSyncClient> pointer;
 	
 	ofxSyncClient(
-		//boost::asio::io_service& rIOService
-		const std::string sSyncServerIP
+		boost::asio::io_service& rIOService
+		,const std::string sSyncServerIP
 		,const std::string nSyncServerPort
 		,const std::string nTransferServerPort
 	);
 	~ofxSyncClient();
+	//void startThread();
 	void run();
 	void connect();
 	bool isConnected();
@@ -56,7 +58,7 @@ private:
 	);
 	
 
-	boost::asio::io_service io_service_;
+	boost::asio::io_service& io_service_;
 	tcp::socket socket_;
 	tcp::resolver resolver_;
 	boost::array<char, 1024>buf_;
@@ -68,7 +70,8 @@ private:
 	std::string transfer_server_port_;
 
 	ofxSyncDirList dir_list_;
-	ofxFileTransferServer file_server_;
+	//ofxFileTransferServer file_server_;
+	boost::shared_ptr<ofxFileTransferServer> file_server_;
 	bool is_connected;
 };
 #endif
