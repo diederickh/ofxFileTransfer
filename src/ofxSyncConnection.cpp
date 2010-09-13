@@ -7,7 +7,12 @@ ofxSyncConnection::ofxSyncConnection(boost::asio::io_service& rService)
 	transfer_man_.startThread();
 }
 
+ofxSyncConnection::~ofxSyncConnection() {
+	cout << "~~~~ ofxSyncConnection()" << std::endl;
+}
+
 void ofxSyncConnection::start() {
+	cout << "ofxSyncConnection.start()" << std::endl;
 	transfer_addr_= socket_.remote_endpoint().address().to_string();
 	async_read_until(
 			socket_
@@ -61,7 +66,7 @@ void ofxSyncConnection::handleRequest(
 	if(bytes_to_read < chunk_size)
 		chunk_size = bytes_to_read;
 		
-	std::cout << "ofxSyncConnection: start reading the rest of the buffer: " <<bytes_to_read << std::endl;	
+	std::cout << "ofxSyncConnection: start reading the rest of the buffer: " << bytes_to_read << " with chunk_size:" << chunk_size << std::endl;	
 	// .. and read the rest.
 	boost::asio::async_read(
 		socket_
@@ -109,7 +114,7 @@ void ofxSyncConnection::handleSyncData(
 			// parse the remote file list.
 			bool result = false;
 			std::vector<SyncInfo>remote_files;
-			result = sync_list_.parseList(remote_list, remote_files);
+			result = sync_list_.parseList(remote_list, local_path_, remote_files);
 			if(!result) {
 				std::cout << "Error: cannot parse remote list" << std::endl;
 				return;
@@ -119,7 +124,7 @@ void ofxSyncConnection::handleSyncData(
 			std::stringstream local_list;
 			std::vector<SyncInfo>local_files;
 			sync_list_.getList(remote_path_, local_list);
-			result = sync_list_.parseList(local_list, local_files);
+			result = sync_list_.parseList(local_list, remote_path_, local_files);
 			if(!result) {
 				std::cout << "Error: cannot parse local list" << std::endl;
 				
@@ -136,21 +141,25 @@ void ofxSyncConnection::handleSyncData(
 				while(it != files_to_sync.end()) {
 					std::string client_dest = (*it).file_name;
 					boost::algorithm::replace_first(client_dest, remote_path_, local_path_);
+					
 					std::cout	<< std::endl
 								<< ">> fileserver: "	<< transfer_addr_	<< std::endl
 								<< ">> port: "			<< transfer_port_	<< std::endl
 								<< ">> local file: "	<< (*it).file_name  << std::endl
 								<< ">> remote file: "	<< (*it).file_name  << std::endl
 								<< ">> new_remote: "	<< client_dest		<< std::endl
+								<< ">> rel_name: "		<< (*it).relative_file_name << std::endl
 								<< "-----------------------" << std::endl
 								<< std::endl;
-								
+				
+					
 					transfer_man_.transferFile(
 						transfer_addr_
 						,transfer_port_.c_str()
 						,(*it).file_name
 						,client_dest
 					);
+					
 					
 					++it;
 					//break;
@@ -159,6 +168,9 @@ void ofxSyncConnection::handleSyncData(
 				
 			std::cout << "READY parsin gbuffer" << std::endl;
 			remote_list.str("");
+
+			// restart...
+			start();
 		}
 		
 	}

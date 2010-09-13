@@ -95,8 +95,8 @@ void ofxFileTransferConnection::handleFileContent(
 {
 	if(nBytesTransferred > 0) {
 		out_file_stream_.write(buffer_.c_array(), (std::streamsize)nBytesTransferred);
-		std::cout << __FUNCTION__ << "<< recv " << out_file_stream_.tellp() << " bytes." << std::endl;
-		std::cout << __FUNCTION__ << out_file_stream_.tellp() << " <> " << (std::streamsize)file_size_ << std::endl;
+		//std::cout << __FUNCTION__ << "<< recv " << out_file_stream_.tellp() << " bytes." << std::endl;
+		//std::cout << __FUNCTION__ << out_file_stream_.tellp() << " <> " << (std::streamsize)file_size_ << std::endl;
 		if(out_file_stream_.tellp() >= (std::streamsize)file_size_) {
 			//manager->removeTransfer(shared_from_this());
 			return ;

@@ -29,7 +29,7 @@ bool ofxSyncDirList::getList(std::string sPath, std::iostream& rOut) {
 		if(isHidden(cur->path())) {
 			continue;
 		}
-		cout << "Use file in list: "<< filename << std::endl;
+		//cout << "Use file in list: "<< filename << std::endl;
 	
 		
 		// get file size
@@ -97,7 +97,11 @@ boost::filesystem::path getPathRelativeTo(
     
 
 // Parse a stream created by 'getList'.
-bool ofxSyncDirList::parseList(std::iostream& rDataStream, std::vector<SyncInfo>&rResultList) {
+bool ofxSyncDirList::parseList(
+					std::iostream& rDataStream
+					,std::string sBasePath
+					,std::vector<SyncInfo>&rResultList
+) {
 	uint32_t file_size;
 	uint32_t name_size;
 //	std::string local_path;
@@ -113,14 +117,18 @@ bool ofxSyncDirList::parseList(std::iostream& rDataStream, std::vector<SyncInfo>
 			std::cout << "Error: length of filename is incorrect: " << name_size << std::endl;
 			break;
 		}
+		
 		rDataStream.read(&buf[0], name_size);
 		buf[name_size] = '\0';
 		std::string name(buf);
 
-		SyncInfo info(name, file_size);
+		std::string relative_file_name = name;
+		boost::algorithm::replace_first(relative_file_name, sBasePath,"");
+		
+		SyncInfo info(name, relative_file_name, file_size);
 		rResultList.push_back(info);
 
-		std::cout << "file size: "<< file_size << " name-len: " << name_size << ", name: '" << name << "'" << std::endl;
+		//std::cout << "file size: "<< file_size << " name-len: " << name_size << ", name: '" << name << "'" << std::endl;
 	}
 	return true;
 }
@@ -131,6 +139,13 @@ bool ofxSyncDirList::getDifference(
 				,std::vector<SyncInfo>&rResult
 )
 {
+/*
+	vector<SyncInfo>::iterator it = a.begin();
+	while(it != a.end()) {
+		std::cout << "file: "<< 
+		++it;
+	}
+*/
 	std::sort(a.begin(), a.end(), SyncSort());
 	std::sort(b.begin(), b.end(), SyncSort());
 	std::set_difference(

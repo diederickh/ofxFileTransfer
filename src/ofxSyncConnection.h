@@ -19,6 +19,7 @@ class ofxSyncConnection : public boost::enable_shared_from_this<ofxSyncConnectio
 public:
 
 	ofxSyncConnection(boost::asio::io_service& rService);
+	~ofxSyncConnection();
 	void start();
 	void handleRequest(const boost::system::error_code& rErr, std::size_t nBytesTransferred);
 	void handleSyncData(

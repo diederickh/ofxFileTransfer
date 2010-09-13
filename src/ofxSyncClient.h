@@ -20,14 +20,16 @@ public:
 	typedef boost::shared_ptr<ofxSyncClient> pointer;
 	
 	ofxSyncClient(
-		boost::asio::io_service& rIOService
-		,const std::string sSyncServerIP
+		//boost::asio::io_service& rIOService
+		const std::string sSyncServerIP
 		,const std::string nSyncServerPort
 		,const std::string nTransferServerPort
 	);
-	
-	void start();
-		
+	~ofxSyncClient();
+	void run();
+	void connect();
+	bool isConnected();
+	void synchronize();
 private:
 	void handleResolve(
 		const boost::system::error_code& rErr
@@ -54,7 +56,7 @@ private:
 	);
 	
 
-	//boost::asio::io_service_ io_service;
+	boost::asio::io_service io_service_;
 	tcp::socket socket_;
 	tcp::resolver resolver_;
 	boost::array<char, 1024>buf_;
@@ -67,5 +69,6 @@ private:
 
 	ofxSyncDirList dir_list_;
 	ofxFileTransferServer file_server_;
+	bool is_connected;
 };
 #endif

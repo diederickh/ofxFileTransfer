@@ -40,11 +40,11 @@ void ofxFileTransferClient::start() {
 	std::ostream request_stream(&request_);
 
 	request_stream	<< remote_file_ << "\n"
-					<< file_size << "\n\n";
+					<< file_size	<< "\n\n";
 					
-	std::cout	<< ">> request_size:" 	<< request_.size() 
-				<< " file_path: " << file_path_
-				<< " file_size: "<< file_size
+	std::cout	<< "ofxFileTransferClient request_size:" 	<< request_.size()	<< std::endl
+				<< "ofxFileTransferClient file_path: "		<< file_path_		<< std::endl
+				<< "ofxFileTransferClient file_size: "		<< file_size		<< std::endl	
 				<< std::endl;
 		
 	// resolve ofxFileTransferServer
@@ -91,7 +91,7 @@ void ofxFileTransferClient::handleConnect(
 )
 {
 	if(!rErr) {
-		cout << ">> connected!" << std::endl;
+		cout << "ofxFileTransferClient.handleConnect: connected." << std::endl;
 		boost::asio::async_write(
 				 socket_
 				,request_
@@ -133,7 +133,7 @@ void ofxFileTransferClient::handleFileWrite(
 				std::cout << ">> read file error when trying to read: " << buf_.size() << " bytes " << std::endl;
 				return;
 			}
-			std::cout << ">> send: " << source_file_stream_.gcount() << " bytes, total: " << source_file_stream_.tellg() << " bytes\n";
+			//std::cout << ">> send: " << source_file_stream_.gcount() << " bytes, total: " << source_file_stream_.tellg() << " bytes\n";
 			boost::asio::async_write(
 					socket_
 					,boost::asio::buffer(buf_.c_array(), source_file_stream_.gcount())
