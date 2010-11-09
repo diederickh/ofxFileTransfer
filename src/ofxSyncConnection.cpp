@@ -122,6 +122,7 @@ void ofxSyncConnection::handleSyncData(
 		else {
 			std::cout << "Compare remote and local list." << std::endl;
 			cout << "RECEIVED: " << remote_list << std::endl;
+		
 			// parse the remote file list.
 			bool result = false;
 			std::vector<SyncInfo>remote_files;
@@ -160,8 +161,8 @@ void ofxSyncConnection::handleSyncData(
 			std::vector<SyncInfo>files_to_sync;
 			sync_list_.getDifference(local_files, remote_files, files_to_sync);
 			if(files_to_sync.size() > 0) {
-				// @todo -> sync with remote
-				// @todo -> files with white space in name hang
+				// TODO  -> sync with remote
+				// TODO -> files with white space in name hang
 				std::vector<SyncInfo>::iterator it = files_to_sync.begin();
 				while(it != files_to_sync.end()) {
 					std::string client_dest = (*it).file_name;
